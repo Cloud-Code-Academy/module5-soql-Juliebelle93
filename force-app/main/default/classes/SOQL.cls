@@ -408,13 +408,24 @@ public static List<Opportunity> getClosedWonOpportunitiesByAccount(Id accountId)
 	public static Account getAccountAndOpportunitiesFromAccountId(Id accountId) {
 
 		Account acc = [
-			SELECT Name , (SELECT Id, Name FROM Opportunities)
+			SELECT Name, (SELECT Id, Name FROM Opportunities)
 			FROM Account
 			WHERE Id = :accountId
+			LIMIT 1
 		];
-		return acc; // Replace null with the variable you used to store the result
-	}
+		if (acc == null) {
+			return null;
+		}
 
+		// Display Account Name and Opportunity Names
+		System.debug('Account Name: ' + acc.Name);
+
+		for (Opportunity opp : acc.Opportunities) {
+			System.debug('Opportunity Names: ' + opp.Name);
+		}
+
+		return acc;
+	}
 	/**
 	 * Question 21
 	 * Retrieves all contacts that have the Mailing State similar to the Account Billing State.
@@ -423,12 +434,31 @@ public static List<Opportunity> getClosedWonOpportunitiesByAccount(Id accountId)
 	 * @return List of contacts with the same Mailing State as the Account Billing State
 	 */
 	public static List<Contact> getAccountsWithContactsByState(Id accountId) {
+
 		// Query the Account
-
+		List<Contact> contact = new List<Contact>();
+		Account acc = [
+			SELECT BillingState
+			FROM Account
+			WHERE Id = :accountId
+		];
 		// Store the Account's BillingState
+		String billingState = acc.BillingState;
+System.debug('Billing State: ' + billingState);
 
+		if (billingState == null) {
+			return contact;
+		}
 		// Query the Contacts
-		return null; // Replace null with the variable you used to store the result
+		contact = [
+			SELECT Id, FirstName, LastName, MailingState
+			FROM Contact
+			WHERE MailingState = :billingState
+		];
+System.debug('Contacts: ' + contact);
+
+
+		return contact; // Replace null with the variable you used to store the result
 	}
 
 	/**
