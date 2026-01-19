@@ -414,10 +414,6 @@ public static List<Opportunity> getClosedWonOpportunitiesByAccount(Id accountId)
 			LIMIT 1
 		];
 
-		for (Opportunity opp : acc.Opportunities) {
-			System.debug('Account Name: ' + acc.Name);
-			System.debug('Opportunity Name: ' + opp.Name);
-		}
 		return acc;
 	}
 
@@ -473,11 +469,13 @@ public static List<Opportunity> getClosedWonOpportunitiesByAccount(Id accountId)
 			// Get the email from the Lead
 			String email = l.Email;
 			
-			// Check if the email is not null
+			// Check if the email is not null and has valid format
 			if (email != null && email.contains('@')) {
 				// Add the email domain to the set (extract domain after @)
-				String domain = email.split('@')[1];
-				emailDomains.add('www.' + domain);
+				String domain = email.substringAfter('@');
+				if (String.isNotBlank(domain)) {
+					emailDomains.add('www.' + domain);
+				}
 			}
 		}
 
@@ -513,7 +511,7 @@ public static List<Opportunity> getClosedWonOpportunitiesByAccount(Id accountId)
 			// Loop through each original line item
 			for (OpportunityLineItem origItem : originalLineItems) {
 				// Generate a random number between 1 and 3
-				Integer randomNumber = (Integer) Math.floor(Math.random() * 3) + 1;
+				Integer randomNumber = (Integer) (Math.random() * 3) + 1;
 				
 				// Clone the original line item and add the random number to the quantity
 				OpportunityLineItem newItem = new OpportunityLineItem(
