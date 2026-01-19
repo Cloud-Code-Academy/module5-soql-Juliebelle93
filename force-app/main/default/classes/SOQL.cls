@@ -508,7 +508,7 @@ public static List<Opportunity> getClosedWonOpportunitiesByAccount(Id accountId)
 	 * @param Original Opportunity Id
 	 * @param List of cloned Opportunity Ids
 	 */
-	
+
 	public static void cloneLineItems(Id origOppId, List<Id> cloneOppIds) {
     if (origOppId == null || cloneOppIds == null || cloneOppIds.isEmpty()) return;
 
@@ -545,7 +545,13 @@ public static List<Opportunity> getClosedWonOpportunitiesByAccount(Id accountId)
 	 * @return A list of filtered Opportunity
 	 */
 	public static List<Opportunity> getOpportunityDetailsForClosedWon() {
-		return null; // Replace null with the variable you used to store the result
+
+		List<Opportunity> opportunuties = [
+			SELECT Name, Account.Name, Owner.Name
+			FROM Opportunity
+			WHERE StageName = 'Closed Won'
+		];
+		return opportunuties; // Replace null with the variable you used to store the result
 	}
 
 	/**
