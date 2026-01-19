@@ -36,7 +36,7 @@ public with sharing class SOQLTest {
 		Set<String> leadNames = new Set<String>{ 'Test Lead 1', 'Test Lead 2' };
 		try {
 			for (Lead lead : leads) {
-				System.assert(leadNames.contains(lead.LastName), 'Lead name is incorrect.');
+				System.assert(leadNames.contain(lead.LastName), 'Lead name is incorrect.');
 				Assert.isNotNull(lead.Company, 'Lead company is null.');
 				Assert.isNotNull(lead.Phone, 'Lead phone is null.');
 				Assert.isNotNull(lead.Email, 'Lead email is null.');
@@ -178,7 +178,8 @@ public with sharing class SOQLTest {
 	}
 
 	@IsTest
-	static void testGetContactsByEmailDomain() {
+	static void testGetContactByEmailDomain() 
+	{
 		// Create test data
 		Contact testContact1 = new Contact(FirstName = 'John', LastName = 'Doe', Email = 'john@example.com');
 		Contact testContact2 = new Contact(FirstName = 'Jane', LastName = 'Smith', Email = 'jane@example.com');
@@ -186,7 +187,7 @@ public with sharing class SOQLTest {
 		insert new List<Contact>{ testContact1, testContact2, testContact3 };
 
 		// Call the method to test
-		List<Contact> contacts = SOQL.getContactByEmailDomain(); //Replace null with your method call from SOQL class
+		List<Contact> contacts = SOQL.getContactByEmailDomain('example.com'); //Replace null with your method call from SOQL class
 
 		// Assert that the number of contacts returned is correct
 		System.assertEquals(2, contacts.size(), 'Number of contacts returned is incorrect.');

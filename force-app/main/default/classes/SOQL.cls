@@ -147,15 +147,14 @@ public static List<Opportunity> getClosedWonOpportunitiesByAccount(Id accountId)
 	//[public | private ] [static] data_type method_name (input parameters) {
 	//  The body of the method
 	//}
-	public static List<Contact> getContactByEmailDomain()
-	{
-		return [
-			SELECT Id, FirstName, LastName, Email
-			FROM Contact
-			WHERE Email 
-			LIKE '%@example.com%'
-		];
-	}
+public static List<Contact> getContactByEmailDomain() {
+    return [
+        SELECT Id, Name, Email
+        FROM Contact
+        WHERE Email LIKE '%@example.com'
+    ];
+}
+
 
 	/**
 	 * Question 8
