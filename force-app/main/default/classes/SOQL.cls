@@ -387,7 +387,7 @@ public static List<Opportunity> getClosedWonOpportunitiesByAccount(Id accountId)
 	public static String getAccountNameForContact(String contactId) {
 		
 		List<Contact> contacts = [
-			SELECT Account.Name
+			SELECT Id,Account.Name
 			FROM Contact
 			WHERE Id = :contactId
 		];
@@ -408,11 +408,19 @@ public static List<Opportunity> getClosedWonOpportunitiesByAccount(Id accountId)
 	public static Account getAccountAndOpportunitiesFromAccountId(Id accountId) {
 
 		Account acc = [
-			SELECT Name , (SELECT Id, Name FROM Opportunities)
+			SELECT Name, (SELECT Id, Name FROM Opportunities)
 			FROM Account
 			WHERE Id = :accountId
+			LIMIT 1
 		];
-		return acc; // Replace null with the variable you used to store the result
+
+		for (Opportunity opp : acc.Opportunities) {
+			System.debug('Account Name: ' + acc.Name);
+			System.debug('Opportunity Name: ' + opp.Name);
+
+		return acc; 
+		}
+		return null; // Replace null with the variable you used to store the result
 	}
 
 	/**
@@ -423,7 +431,10 @@ public static List<Opportunity> getClosedWonOpportunitiesByAccount(Id accountId)
 	 * @return List of contacts with the same Mailing State as the Account Billing State
 	 */
 	public static List<Contact> getAccountsWithContactsByState(Id accountId) {
+
 		// Query the Account
+
+
 
 		// Store the Account's BillingState
 
