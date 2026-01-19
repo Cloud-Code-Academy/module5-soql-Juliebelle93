@@ -374,7 +374,6 @@ public static List<Opportunity> getClosedWonOpportunitiesByAccount(Id accountId)
 		for (Account a : accounts) {
 			accountIdsToNames.put(a.Id, a.Name);
 		}
-
 		return accountIdsToNames; // Replace null with the variable you used to store the result
 	}
 
@@ -386,7 +385,17 @@ public static List<Opportunity> getClosedWonOpportunitiesByAccount(Id accountId)
 	 * @return The Account Name of the Contact.
 	 */
 	public static String getAccountNameForContact(String contactId) {
-		return null; // Replace null with the variable you used to store the result
+		
+		List<Contact> contacts = [
+			SELECT Account.Name
+			FROM Contact
+			WHERE Id = :contactId
+		];
+		for (Contact c : contacts) {
+			return c.Account.Name;
+		}
+		return null;
+		// Replace null with the variable you used to store the result
 	}
 
 	/**
