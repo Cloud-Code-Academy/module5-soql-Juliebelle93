@@ -444,7 +444,6 @@ public static List<Opportunity> getClosedWonOpportunitiesByAccount(Id accountId)
 		];
 		// Store the Account's BillingState
 		String billingState = acc.BillingState;
-System.debug('Billing State: ' + billingState);
 
 		if (billingState == null) {
 			return contact;
@@ -455,7 +454,6 @@ System.debug('Billing State: ' + billingState);
 			FROM Contact
 			WHERE MailingState = :billingState
 		];
-System.debug('Contacts: ' + contact);
 
 
 		return contact; // Replace null with the variable you used to store the result
@@ -463,28 +461,45 @@ System.debug('Contacts: ' + contact);
 
 	/**
 	 * Question 22
-	 * Extracts email domains from them leads, then finds Accounts with matching website domains
+	 * Extracts email domains from their leads, then find Accounts with matching website domains
 	 * If Lead Email = test@test.com return account with website = www.test.com
 	 * Example: findAccountsByLeadEmailDomains([set of lead ids]) should return a list of Accounts with matching email domains
 	 * @param A set of Lead Ids.
 	 * @return A list of Accounts with matching email domains.
 	 */
 	public static List<Account> findAccountsByLeadEmailDomains(Set<Id> leadIds) {
-		// Query the Leads
+    if (leadIds == null || leadIds.isEmpty()) {
+        return new List<Account>();
+    }
 
-		// Create a set of email domains from the Leads
+    //Query Leads
+    List<Lead> leads = [
+        SELECT Email
+        FROM Lead
+        WHERE Id IN :leadIds
+    ];
 
-		// Loop through each Lead
+    //Extract domains from emails into a Set 
+    Set<String> leadDomains = new Set<String>();
 
-		// Get the email from the Lead
+    for (Lead l : leads) {
+        if (String.isBlank(l.Email)) continue;
 
-		// Check if the email is not null
+        Integer atIndex = l.Email.indexOf('@');
+        if (atIndex == -1) continue;
 
-		// Add the email domain to the set
+        String domain = l.Email.substring(atIndex + 1);
+        leadDomains.add('www.' + domain);
+    }
 
-		// Query the Accounts
-		return null; // Replace null with the variable you used to store the result
-	}
+    //Query Accounts with matching websites
+    List<Account> matchingAccounts = [
+        SELECT Id, Name, Website
+        FROM Account
+        WHERE Website IN :leadDomains
+    ];
+
+    return matchingAccounts;
 
 	/**
 	 * Question 23
@@ -495,7 +510,11 @@ System.debug('Contacts: ' + contact);
 	 * @param List of cloned Opportunity Ids
 	 */
 	public static void cloneLineItems(Id origOppId, List<Id> cloneOppIds) {
+	
 		// Query the original Opportunity Line Items
+		List<Opportunity>LineItem> originalLineItems = [
+			SELECT Id, 
+		]
 
 		// Create a list to hold the new line items
 
