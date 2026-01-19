@@ -206,7 +206,7 @@ public static List<Opportunity> getClosedWonOpportunitiesByAccount(Id accountId)
 			FROM Lead
 			WHERE LeadSource = :leadSource OR Title LIKE :searchPattern
 		];
-}
+	}
 
 	/**
 	 * Question 11
@@ -561,17 +561,37 @@ public static List<Opportunity> getClosedWonOpportunitiesByAccount(Id accountId)
 	 */
 	public static void setPrimaryContact() {
 		//Use the getOpportunityDetailsForClosedWon() method to get the Opportunities
+		List<Opportunity> opportunities = getOpportunityDetailsForClosedWon();
 
 		// Create a set of Account Ids from the Opportunities
-
+		Set<Id> accountIds = new Set<Id>();
+		for (Opportunity opp : opportunities) {
+			accountIds.add(opp.AccountId);
+		}
 		// Query the Contacts
+		List<Contact> contacts = [
+			SELECT Id, FirstName, LastName, AccountId
+			FROM Contact
+			WHERE AccountId IN :accountIds
+			ORDER BY FirstName ASC
+		];
 
 		// Loop through each Contact and add the Account Id and Contact to the map
 
+		Map<Id, Contact> accountToContactMap = new Map<Id, Contact>();
+		for (Contact c : contacts) {
+			if (!accountToContactMap.containsKey(c.AccountId)) {
+				accountToContactMap.put(c.AccountId, c);
+			}
+		}
 		// Loop through each Opportunity
-
 		// Update the Opportunity primary contact from accountToContactMap
-
+		for (Opportunity opp : opportunities) {
+			if (accountToContactMap.containsKey (opp.AccountId)) {
+				opp.Primary_Contact__c = accountToContactMap.get(opp.AccountId).Id;
+			}
+		}
 		// Update the Opportunities
+		update opportunities;
 	}
 }
