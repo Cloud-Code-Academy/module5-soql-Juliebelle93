@@ -511,7 +511,7 @@ public static List<Opportunity> getClosedWonOpportunitiesByAccount(Id accountId)
 			// Loop through each original line item
 			for (OpportunityLineItem origItem : originalLineItems) {
 				// Generate a random number between 1 and 3
-				Integer randomNumber = (Integer) (Math.random() * 3) + 1;
+				Integer randomNumber = (Integer) Math.floor(Math.random() * 3) + 1;
 				
 				// Clone the original line item and add the random number to the quantity
 				OpportunityLineItem newItem = new OpportunityLineItem(
