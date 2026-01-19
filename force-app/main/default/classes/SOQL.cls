@@ -16,7 +16,7 @@
  * Users of this class can expect to gain a solid understanding of SOQL in Apex and
  * be prepared to handle data retrieval tasks in Salesforce development.
  *
- * @author Your Name
+ * @author Julie Hernandez
  */
 
 public with sharing class SOQL {
@@ -30,6 +30,12 @@ public with sharing class SOQL {
 	//[public | private ] [static] data_type method_name (input parameters) {
 	//  The body of the method
 	//}
+	public static List<Lead> getAllLeads()
+	{
+		return [
+			SELECT Id, LastName, Company, Phone, Email FROM Lead
+		];
+	}				
 
 	/**
 	 * Question 2
@@ -41,6 +47,12 @@ public with sharing class SOQL {
 	//[public | private ] [static] data_type method_name (input parameters) {
 	//  The body of the method
 	//}
+	public static List<Contact> getALLContactsByFirstName()
+	{
+		return [
+			SELECT Id, FirstName, LastName, Email FROM Contact WHERE FirstName = 'John'
+		];
+	}
 
 	/**
 	 * Question 3
@@ -52,6 +64,15 @@ public with sharing class SOQL {
 	//[public | private ] [static] data_type method_name (input parameters) {
 	//  The body of the method
 	//}
+	static public List<Id> getContactIdsByLastName()
+	{
+		List<Contact> contacts = [SELECT Id FROM Contact WHERE LastName = 'Smith' OR LastName = 'Jones'];
+		List<Id> contactIds = new List<Id>();
+		for (Contact c : contacts) {
+			contactIds.add(c.Id);
+		}
+		return contactIds;
+	}
 
 	/**
 	 * Question 4
@@ -65,6 +86,15 @@ public with sharing class SOQL {
 	//[public | private ] [static] data_type method_name (input parameters) {
 	//  The body of the method
 	//}
+public static List<Opportunity> getClosedWonOpportunitiesByAccount(Id accountId)
+	{
+		return[
+			SELECT Id, Name, StageName, CloseDate, Amount, AccountId 
+			FROM Opportunity 
+			WHERE AccountId = :accountId 
+			AND StageName = 'Closed Won'
+		];
+	}
 
 	/**
 	 * Question 5
@@ -76,6 +106,14 @@ public with sharing class SOQL {
 	//[public | private ] [static] data_type method_name (input parameters) {
 	//  The body of the method
 	//}
+	public static Integer getAccountCount()
+	{
+		return [
+			SELECT COUNT() 
+			FROM Account	
+		];
+	}
+
 
 	/**
 	 * Question 6
@@ -87,6 +125,18 @@ public with sharing class SOQL {
 	//[public | private ] [static] data_type method_name (input parameters) {
 	//  The body of the method
 	//}
+	public static Map<Id,Task> getTasksDueNextWeek()
+	{
+		Map<Id,Task> taskMap = new Map<Id,Task>();
+		for (Task t : 
+		[SELECT Id, Subject, ActivityDate
+		FROM Task
+		WHERE ActivityDate = Next_N_Days:7])
+		{
+			taskMap.put(t.Id, t);
+		}
+		return taskMap;
+	}
 
 	/**
 	 * Question 7
@@ -98,6 +148,15 @@ public with sharing class SOQL {
 	//[public | private ] [static] data_type method_name (input parameters) {
 	//  The body of the method
 	//}
+	public static List<Contact> getContactByEmailDomain()
+	{
+		return [
+			SELECT Id, FirstName, LastName, Email
+			FROM Contact
+			WHERE Email 
+			LIKE '%@example.com%'
+		];
+	}
 
 	/**
 	 * Question 8
@@ -107,16 +166,27 @@ public with sharing class SOQL {
 	 * @return A list of Opportunity records.
 	 */
 	public static List<Opportunity> getOpportunitiesByNameKeyword(String keyword) {
-		return null; // Replace null with the variable you used to store the result
-	}
-
+		// Query the Opportunities
+		String searchPattern = '%' + keyword + '%';
+		return [
+			SELECT Id, Name
+			FROM Opportunity
+			WHERE Name LIKE :searchPattern
+		];
+	}		
+	
 	/**
 	 * Question 9
 	 * Retrieves all Cases that Case Origin is not Web or Email or Blank
 	 * @return A list of Case records.
 	 */
 	public static List<Case> getFilterCaseOrigins() {
-		return null; // Replace null with the variable you used to store the result
+
+		return [
+			SELECT Id, Origin
+			FROM Case
+			WHERE Origin != 'Web' AND Origin != 'Email' AND Origin != null
+		];
 	}
 
 	/**
@@ -130,8 +200,14 @@ public with sharing class SOQL {
 	 * Update the corresponding test class and testGetLeadsBySourceOrTitle method to cover this method
 	 */
 	//[public | private ] [static] data_type method_name (input parameters) {
-	//  The body of the method
-	//}
+	public static List<Lead> getLeadsBySourceOrTitle(String leadSource, String keyword) {
+		String searchPattern = '%' + keyword +  '%';
+		return [
+			SELECT Id, LastName, Company, Phone, Email
+			FROM Lead
+			WHERE LeadSource = :leadSource OR Title LIKE :searchPattern
+	]
+			;}
 
 	/**
 	 * Question 11
@@ -142,15 +218,23 @@ public with sharing class SOQL {
 	 */
 	public static List<String> getContactNamesByAccount(Id accountId) {
 		// Create a list to hold the Contact LastNames
+		List<String> contactNames = new List<String>();
 
 		// Query the Contacts
+		List<Contact> contacts =[
+			SELECT LastName
+			FROM Contact
+			WHERE AccountId = :accountId
+		];
 		// Loop through each Contact and add the LastName to the list
 		//for () {
+		for (Contact c : contacts) {
+			contactNames.add(c.LastName);
+		}
 		//
 		//}
-
 		// Return the list of Contact LastNames
-		return null; // Replace null with the variable you used to store the result
+		return contactNames; // Replace null with the variable you used to store the result
 	}
 
 	/**
@@ -161,10 +245,22 @@ public with sharing class SOQL {
 	 * @return The total revenue.
 	 */
 	public static Decimal getTotalRevenueByStage(String stage) {
+		// Create a variable to hold the total revenue
+		Decimal totalRevenue = 0;
 		// Use AggregateQuery to get the total revenue
+		List<AggregateResult> results = [
+			SELECT SUM(Amount) totalRevenue
+			FROM Opportunity
+			WHERE StageName = :stage OR Amount > 10000
+
+		];
+
+		if (!results.isEmpty() && results[0].get('totalRevenue') != null) {
+			totalRevenue = (Decimal)results[0].get('totalRevenue');
+		}
 
 		// Return the total revenue
-		return null; // Replace null with the variable you used to store the result
+		return totalRevenue; // Replace null with the variable you used to store the result
 	}
 
 	/**
@@ -173,7 +269,13 @@ public with sharing class SOQL {
 	 * @return A list of the first 10 Accounts ordered by Name.
 	 */
 	public static List<Account> getFirstTenAccounts() {
-		return null; // Replace null with the variable you used to store the result
+		// Query the Accounts
+		return [
+			SELECT Id, Name
+			FROM Account
+			ORDER BY Name
+			LIMIT 10
+		];
 	}
 
 	/**
@@ -182,7 +284,13 @@ public with sharing class SOQL {
 	 * @return A list of Opportunities with an Amount greater than 100,000, ordered by CloseDate, and limited to 5 records.
 	 */
 	public static List<Opportunity> getHighValueOpportunities() {
-		return null; // Replace null with the variable you used to store the result
+		return[
+			SELECT Id, Name, Amount, CloseDate
+			FROM Opportunity
+			WHERE Amount > 100000
+			ORDER BY CloseDate
+			LIMIT 5
+		];
 	}
 
 	/**
@@ -191,7 +299,15 @@ public with sharing class SOQL {
 	 * @return A list of Contacts
 	 */
 	public static List<Contact> getBirthdateContacts() {
-		return null; // Replace null with the variable you used to store the result
+		
+		return[
+
+			SELECT FirstName, LastName, Birthdate
+			FROM Contact 
+			WHERE Birthdate != null
+			ORDER BY Birthdate Desc 
+			LIMIT   3
+		];
 	}
 
 	/**
@@ -200,7 +316,17 @@ public with sharing class SOQL {
 	 * @return A list of Cases
 	 */
 	public static List<Case> getCasesWithStatus() {
-		return null; // Replace null with the variable you used to store the result
+		List<Case> openCases = [
+			SELECT Id, Status, CreatedDate
+			FROM Case
+			WHERE Status = 'Open'
+			ORDER BY CreatedDate
+			LIMIT 10 
+			OFFSET 5
+		];
+
+
+		return openCases; // Replace null with the variable you used to store the result
 	}
 
 	/**
