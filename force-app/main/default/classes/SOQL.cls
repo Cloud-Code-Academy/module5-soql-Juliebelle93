@@ -18,8 +18,8 @@
  *
  * @author Julie Hernandez
  */
-
 public with sharing class SOQL {
+
 	/**
 	 * Question 1
 	 * Update/Uncomment the template code to create a method
@@ -35,7 +35,7 @@ public with sharing class SOQL {
 		return [
 			SELECT Id, LastName, Company, Phone, Email FROM Lead
 		];
-	}				
+	}
 
 	/**
 	 * Question 2
@@ -47,7 +47,7 @@ public with sharing class SOQL {
 	//[public | private ] [static] data_type method_name (input parameters) {
 	//  The body of the method
 	//}
-	public static List<Contact> getALLContactsByFirstName()
+	public static List<Contact> getAllContactsByFirstName()
 	{
 		return [
 			SELECT Id, FirstName, LastName, Email FROM Contact WHERE FirstName = 'John'
@@ -106,8 +106,7 @@ public static List<Opportunity> getClosedWonOpportunitiesByAccount(Id accountId)
 	//[public | private ] [static] data_type method_name (input parameters) {
 	//  The body of the method
 	//}
-	public static Integer getAccountCount()
-	{
+	public static Integer getAccountCount(){
 		return [
 			SELECT COUNT() 
 			FROM Account	
@@ -206,8 +205,8 @@ public static List<Opportunity> getClosedWonOpportunitiesByAccount(Id accountId)
 			SELECT Id, LastName, Company, Phone, Email
 			FROM Lead
 			WHERE LeadSource = :leadSource OR Title LIKE :searchPattern
-	]
-			;}
+		];
+}
 
 	/**
 	 * Question 11
@@ -493,14 +492,14 @@ public static List<Opportunity> getClosedWonOpportunitiesByAccount(Id accountId)
     }
 
     //Query Accounts with matching websites
-    List<Account> matchingAccounts = [
+    List<Account> matchingWebsites = [
         SELECT Id, Name, Website
         FROM Account
         WHERE Website IN :leadDomains
     ];
 
-    return matchingAccounts;
-
+    return matchingWebsites;
+	}
 	/**
 	 * Question 23
 	 * Clones and Inserts Opportunity Line Items from an original Opportunity to a list of cloned Opportunities.
@@ -509,25 +508,36 @@ public static List<Opportunity> getClosedWonOpportunitiesByAccount(Id accountId)
 	 * @param Original Opportunity Id
 	 * @param List of cloned Opportunity Ids
 	 */
-	public static void cloneLineItems(Id origOppId, List<Id> cloneOppIds) {
 	
-		// Query the original Opportunity Line Items
-		List<Opportunity>LineItem> originalLineItems = [
-			SELECT Id, 
-		]
+	public static void cloneLineItems(Id origOppId, List<Id> cloneOppIds) {
+    if (origOppId == null || cloneOppIds == null || cloneOppIds.isEmpty()) return;
 
-		// Create a list to hold the new line items
+    List<OpportunityLineItem> opportunityLineItems = [
+        SELECT Id, OpportunityId, Quantity, PricebookEntryId, UnitPrice
+        FROM OpportunityLineItem
+        WHERE OpportunityId = :origOppId
+    ];
 
-		// Generate a random number between 1 and 3
+    if (opportunityLineItems.isEmpty()) return;
 
-		// Loop through each cloned Opportunity Id
+    List<OpportunityLineItem> newLineItems = new List<OpportunityLineItem>();
 
-		// Loop through each original line item
+    Integer randomNum = Math.mod(Math.abs(Crypto.getRandomInteger()), 3) + 1;
 
-		// Clone the original line item and add the random number to the quantity
+    for (Id cloneOppId : cloneOppIds) {
+        for (OpportunityLineItem oli : opportunityLineItems) {
+            OpportunityLineItem newOli = oli.clone(false, false, false, false);
+            newOli.OpportunityId = cloneOppId;
+            newOli.Quantity = oli.Quantity + randomNum;
+            newLineItems.add(newOli);
+        }
+    }
 
-		// Insert the new line items
-	}
+    if (!newLineItems.isEmpty()) {
+        insert newLineItems;
+    }
+}
+
 
 	/**
 	 * Question 24
