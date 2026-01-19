@@ -417,10 +417,8 @@ public static List<Opportunity> getClosedWonOpportunitiesByAccount(Id accountId)
 		for (Opportunity opp : acc.Opportunities) {
 			System.debug('Account Name: ' + acc.Name);
 			System.debug('Opportunity Name: ' + opp.Name);
-
-		return acc; 
 		}
-		return null; // Replace null with the variable you used to store the result
+		return acc;
 	}
 
 	/**
@@ -433,13 +431,22 @@ public static List<Opportunity> getClosedWonOpportunitiesByAccount(Id accountId)
 	public static List<Contact> getAccountsWithContactsByState(Id accountId) {
 
 		// Query the Account
-
-
+		Account acc = [
+			SELECT BillingState
+			FROM Account
+			WHERE Id = :accountId
+			LIMIT 1
+		];
 
 		// Store the Account's BillingState
+		String billingState = acc.BillingState;
 
 		// Query the Contacts
-		return null; // Replace null with the variable you used to store the result
+		return [
+			SELECT Id, FirstName, LastName, MailingState
+			FROM Contact
+			WHERE MailingState = :billingState
+		];
 	}
 
 	/**
@@ -452,19 +459,34 @@ public static List<Opportunity> getClosedWonOpportunitiesByAccount(Id accountId)
 	 */
 	public static List<Account> findAccountsByLeadEmailDomains(Set<Id> leadIds) {
 		// Query the Leads
+		List<Lead> leads = [
+			SELECT Email
+			FROM Lead
+			WHERE Id IN :leadIds
+		];
 
 		// Create a set of email domains from the Leads
+		Set<String> emailDomains = new Set<String>();
 
 		// Loop through each Lead
-
-		// Get the email from the Lead
-
-		// Check if the email is not null
-
-		// Add the email domain to the set
+		for (Lead l : leads) {
+			// Get the email from the Lead
+			String email = l.Email;
+			
+			// Check if the email is not null
+			if (email != null && email.contains('@')) {
+				// Add the email domain to the set (extract domain after @)
+				String domain = email.split('@')[1];
+				emailDomains.add('www.' + domain);
+			}
+		}
 
 		// Query the Accounts
-		return null; // Replace null with the variable you used to store the result
+		return [
+			SELECT Id, Name, Website
+			FROM Account
+			WHERE Website IN :emailDomains
+		];
 	}
 
 	/**
@@ -477,18 +499,37 @@ public static List<Opportunity> getClosedWonOpportunitiesByAccount(Id accountId)
 	 */
 	public static void cloneLineItems(Id origOppId, List<Id> cloneOppIds) {
 		// Query the original Opportunity Line Items
+		List<OpportunityLineItem> originalLineItems = [
+			SELECT Id, OpportunityId, Quantity, PricebookEntryId, UnitPrice
+			FROM OpportunityLineItem
+			WHERE OpportunityId = :origOppId
+		];
 
 		// Create a list to hold the new line items
-
-		// Generate a random number between 1 and 3
+		List<OpportunityLineItem> newLineItems = new List<OpportunityLineItem>();
 
 		// Loop through each cloned Opportunity Id
-
-		// Loop through each original line item
-
-		// Clone the original line item and add the random number to the quantity
+		for (Id cloneOppId : cloneOppIds) {
+			// Loop through each original line item
+			for (OpportunityLineItem origItem : originalLineItems) {
+				// Generate a random number between 1 and 3
+				Integer randomNumber = (Integer) Math.floor(Math.random() * 3) + 1;
+				
+				// Clone the original line item and add the random number to the quantity
+				OpportunityLineItem newItem = new OpportunityLineItem(
+					OpportunityId = cloneOppId,
+					Quantity = origItem.Quantity + randomNumber,
+					PricebookEntryId = origItem.PricebookEntryId,
+					UnitPrice = origItem.UnitPrice
+				);
+				newLineItems.add(newItem);
+			}
+		}
 
 		// Insert the new line items
+		if (!newLineItems.isEmpty()) {
+			insert newLineItems;
+		}
 	}
 
 	/**
@@ -497,7 +538,11 @@ public static List<Opportunity> getClosedWonOpportunitiesByAccount(Id accountId)
 	 * @return A list of filtered Opportunity
 	 */
 	public static List<Opportunity> getOpportunityDetailsForClosedWon() {
-		return null; // Replace null with the variable you used to store the result
+		return [
+			SELECT Id, Name, Account.Name, Owner.Name, StageName
+			FROM Opportunity
+			WHERE StageName = 'Closed Won'
+		];
 	}
 
 	/**
@@ -507,17 +552,44 @@ public static List<Opportunity> getClosedWonOpportunitiesByAccount(Id accountId)
 	 */
 	public static void setPrimaryContact() {
 		//Use the getOpportunityDetailsForClosedWon() method to get the Opportunities
+		List<Opportunity> closedWonOpps = getOpportunityDetailsForClosedWon();
 
 		// Create a set of Account Ids from the Opportunities
+		Set<Id> accountIds = new Set<Id>();
+		for (Opportunity opp : closedWonOpps) {
+			accountIds.add(opp.AccountId);
+		}
 
 		// Query the Contacts
+		List<Contact> contacts = [
+			SELECT Id, FirstName, AccountId
+			FROM Contact
+			WHERE AccountId IN :accountIds
+			ORDER BY FirstName ASC
+		];
 
 		// Loop through each Contact and add the Account Id and Contact to the map
+		Map<Id, Contact> accountToContactMap = new Map<Id, Contact>();
+		for (Contact c : contacts) {
+			// Only add if this account doesn't have a contact yet (first alphabetically)
+			if (!accountToContactMap.containsKey(c.AccountId)) {
+				accountToContactMap.put(c.AccountId, c);
+			}
+		}
 
 		// Loop through each Opportunity
-
-		// Update the Opportunity primary contact from accountToContactMap
+		List<Opportunity> oppsToUpdate = new List<Opportunity>();
+		for (Opportunity opp : closedWonOpps) {
+			// Update the Opportunity primary contact from accountToContactMap
+			if (accountToContactMap.containsKey(opp.AccountId)) {
+				opp.Primary_Contact__c = accountToContactMap.get(opp.AccountId).Id;
+				oppsToUpdate.add(opp);
+			}
+		}
 
 		// Update the Opportunities
+		if (!oppsToUpdate.isEmpty()) {
+			update oppsToUpdate;
+		}
 	}
 }
